@@ -6,61 +6,28 @@ module control_unit (
     output reg        mem_to_reg,
     output reg        alu_src,
     output reg        branch,
+    output reg        jal,
+    output reg        jalr,
+    output reg        lui,
+    output reg        auipc,
     output reg [1:0]  alu_op,
-    output reg [1:0]  imm_src
+    output reg [2:0]  imm_src
 );
-
     always @(*) begin
-        reg_write = 0;
-        mem_write = 0;
-        mem_read  = 0;
-        mem_to_reg= 0;
-        alu_src   = 0;
-        branch    = 0;
-        alu_op    = 2'b00;
-        imm_src   = 2'b00;
-
+        reg_write=0; mem_write=0; mem_read=0; mem_to_reg=0;
+        alu_src=0; branch=0; jal=0; jalr=0; lui=0; auipc=0;
+        alu_op=2'b00; imm_src=3'b000;
         case (opcode)
-            7'b0110011: begin // R-type
-                reg_write = 1;
-                alu_src   = 0;   // second ALU operand = rs2
-                alu_op    = 2'b10; 
-            end
-
-            7'b0010011: begin // I-type ALU
-                reg_write = 1;
-                alu_src   = 1;   // second operand = imm
-                alu_op    = 2'b11; 
-                imm_src   = 2'b00; // I-type immediate
-            end
-
-            7'b0000011: begin // Load (LW)
-                reg_write = 1;
-                mem_read  = 1;
-                mem_to_reg= 1;   // write data from memory
-                alu_src   = 1;   // base + imm
-                alu_op    = 2'b00; // ADD
-                imm_src   = 2'b00; // I-type imm
-            end
-
-            7'b0100011: begin // Store (SW)
-                mem_write = 1;
-                alu_src   = 1;   // base + imm
-                alu_op    = 2'b00; // ADD
-                imm_src   = 2'b01; // S-type imm
-            end
-
-            7'b1100011: begin // Branch 
-                branch    = 1;
-                alu_src   = 0;   // compare rs1, rs2
-                alu_op    = 2'b01; // branch ALUOp
-                imm_src   = 2'b10; // B-type imm
-            end
-
-            default: begin
-               
-            end
+            7'b0110011: begin reg_write=1; alu_op=2'b10; end
+            7'b0010011: begin reg_write=1; alu_src=1; alu_op=2'b11; end
+            7'b0000011: begin reg_write=1; mem_read=1; mem_to_reg=1; alu_src=1; end
+            7'b0100011: begin mem_write=1; alu_src=1; imm_src=3'b001; end
+            7'b1100011: begin branch=1; alu_op=2'b01; imm_src=3'b010; end
+            7'b1101111: begin reg_write=1; jal=1; imm_src=3'b011; end
+            7'b1100111: begin reg_write=1; jalr=1; alu_src=1; end
+            7'b0110111: begin reg_write=1; lui=1; imm_src=3'b100; end
+            7'b0010111: begin reg_write=1; auipc=1; imm_src=3'b100; end
+            default: begin end
         endcase
     end
 endmodule
-
